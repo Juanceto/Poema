@@ -1,0 +1,337 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta en Cursiva desde el Código</title>
+    <!-- Tailwind CSS para diseño responsivo y utilidades limpias -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuentes cursivas de Google Fonts (Dancing Script y Great Vibes) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Great+Vibes&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        /* Fuente general para la interfaz */
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at center, #fdf7ef 0%, #e7d3b8 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Clases de tipografía cursiva listas para usar en la carta */
+        .font-dancing {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .font-vibes {
+            font-family: 'Great Vibes', cursive;
+        }
+
+        /* Perspectiva 3D del escenario del sobre */
+        .escena-sobre {
+            perspective: 1600px;
+        }
+
+        /* Contenedor principal del sobre */
+        .sobre {
+            position: relative;
+            width: 340px;
+            height: 225px;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        @media (min-width: 640px) {
+            .sobre {
+                width: 480px;
+                height: 310px;
+            }
+        }
+
+        /* Al abrirse, desplazamos el sobre hacia abajo para dejar espacio a la carta */
+        .sobre.abierto {
+            transform: translateY(120px);
+        }
+
+        @media (min-width: 640px) {
+            .sobre.abierto {
+                transform: translateY(155px);
+            }
+        }
+
+        /* Parte trasera del sobre */
+        .sobre-trasera {
+            position: absolute;
+            inset: 0;
+            background-color: #d3b893;
+            background-image: radial-gradient(rgba(120, 88, 52, 0.08) 1px, transparent 0);
+            background-size: 16px 16px;
+            border-radius: 8px;
+            box-shadow: 0 22px 45px rgba(72, 49, 25, 0.25), 0 6px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+
+        /* Hoja de carta interior (solo lectura en el navegador, editable en el código) */
+        .carta {
+            position: absolute;
+            left: 5%;
+            bottom: 12px;
+            width: 90%;
+            height: 88%;
+            background-color: #fffdf9;
+            background-image: linear-gradient(to bottom, transparent 95%, rgba(192, 168, 136, 0.35) 96%);
+            background-size: 100% 34px;
+            border-radius: 6px;
+            padding: 20px 24px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+            z-index: 2;
+            overflow-y: auto;
+            transition: transform 0.85s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        height 0.7s ease,
+                        box-shadow 0.7s ease,
+                        z-index 0.1s linear 0.35s;
+        }
+
+        /* Cuando el sobre está abierto, la carta se desliza hacia afuera */
+        .sobre.abierto .carta {
+            transform: translateY(-170px);
+            height: 325px;
+            z-index: 6;
+            box-shadow: 0 18px 40px rgba(60, 39, 18, 0.24);
+        }
+
+        @media (min-width: 640px) {
+            .sobre.abierto .carta {
+                transform: translateY(-220px);
+                height: 410px;
+            }
+        }
+
+        /* Estilo del contenedor del texto manuscrito */
+        .texto-carta {
+            color: #2b1d14;
+            font-size: 1.5rem;
+            line-height: 34px;
+            white-space: pre-line;
+            user-select: text;
+        }
+
+        @media (min-width: 640px) {
+            .texto-carta {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Bolsillo frontal del sobre (triángulos izquierdo, derecho e inferior) */
+        .bolsillo-sobre {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .solapa-izquierda {
+            position: absolute;
+            inset: 0;
+            background-color: #e2caa8;
+            clip-path: polygon(0 0, 52% 52%, 0 100%);
+        }
+
+        .solapa-derecha {
+            position: absolute;
+            inset: 0;
+            background-color: #dcc29e;
+            clip-path: polygon(100% 0, 48% 52%, 100% 100%);
+        }
+
+        .solapa-inferior {
+            position: absolute;
+            inset: 0;
+            background-color: #e9d4b6;
+            clip-path: polygon(0 100%, 50% 48%, 100% 100%);
+            filter: drop-shadow(0 -3px 6px rgba(82, 56, 30, 0.15));
+        }
+
+        /* Solapa superior animada en 3D */
+        .solapa-superior {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 58%;
+            background-color: #dec49f;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+            transform-origin: top center;
+            transition: transform 0.65s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.1s linear 0.3s;
+            z-index: 5;
+            filter: drop-shadow(0 6px 8px rgba(72, 49, 25, 0.2));
+        }
+
+        /* Rotación 3D hacia atrás al abrir */
+        .sobre.abierto .solapa-superior {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        /* Sello de lacre decorativo */
+        .sello-lacre {
+            position: absolute;
+            top: 46%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 56px;
+            height: 56px;
+            background: radial-gradient(circle at 35% 35%, #b91c1c, #7f1d1d);
+            border-radius: 50%;
+            z-index: 7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.25);
+            border: 3px solid #991b1b;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+        }
+
+        .sobre:hover:not(.abierto) .sello-lacre {
+            transform: translate(-50%, -50%) scale(1.08);
+        }
+
+        .sobre.abierto .sello-lacre {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.5);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between p-4 sm:p-8">
+
+    <!-- Título e instrucción en pantalla -->
+    <header class="text-center mt-2 sm:mt-4 z-10">
+        <h1 class="text-2xl sm:text-3xl font-semibold text-amber-950 tracking-tight">Un Sobre para Ti</h1>
+        <p id="instruccion" class="text-sm sm:text-base text-amber-800/80 mt-1 transition-opacity duration-300">
+            Haz clic o toca el sobre para abrirlo
+        </p>
+    </header>
+
+    <!-- Escenario central con el sobre interactivo -->
+    <main class="escena-sobre flex-1 flex items-center justify-center w-full my-8">
+        <div id="sobre" class="sobre" role="button" tabindex="0" aria-label="Abrir o cerrar sobre de carta">
+
+            <!-- Fondo del sobre -->
+            <div class="sobre-trasera"></div>
+
+            <!-- Carta que se desliza hacia afuera -->
+            <article class="carta" id="carta">
+                <div class="flex items-center justify-between border-b border-amber-900/15 pb-1.5 mb-2">
+                    <!-- Puedes cambiar "font-dancing" por "font-vibes" si prefieres Great Vibes -->
+                    <span class="font-dancing text-lg sm:text-xl text-amber-900/70">Con cariño,</span>
+                    <span class="text-xs uppercase tracking-widest text-amber-800/50 font-medium">Gennaro</span>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- ESCRIBE TU CARTA AQUÍ (edita este texto en tu editor HTML) -->
+                <!-- Puedes cambiar la clase "font-dancing" por "font-vibes"    -->
+                <!-- ========================================================= -->
+                <div class="texto-carta font-dancing">
+                    <p>
+                   El dia que me quieras no habrá mas que armonía, endulzará sus cuerdas el pajaro cantor florecerá la vida no existirá el dolor. Pasaremos la vida con la semilla de nuestro amor, ese que siento por vos sin tanta devoción, aquel sentimiento que habita en un alma sin rencor, con el infinito tiempo que nos reivindicara las llamas de la pasión y el afecto que tengo por tu corazón. Resurgiran con una llamarada las cenizas del amor, el mismo que nos dañó, el mismo que nos juntó, como el ave feníx aquella que ardió para renacer en un fuego eterno, con el sentimiento de mi persona a tu resplandor, el mismo brillo que dejan las estrellas al anochecer aquel mismo que nos ilumina en los caminos mas oscuros del crepusculo que nos abre las puertas a un nuevo conocer del amor
+                    </p>
+                </div>
+                <!-- ========================================================= -->
+                <!-- FIN DEL TEXTO DE LA CARTA                                 -->
+                <!-- ========================================================= -->
+            </article>
+
+            <!-- Bolsillo frontal del sobre -->
+            <div class="bolsillo-sobre">
+                <div class="solapa-izquierda"></div>
+                <div class="solapa-derecha"></div>
+                <div class="solapa-inferior"></div>
+            </div>
+
+            <!-- Solapa superior que se abre en 3D -->
+            <div class="solapa-superior"></div>
+
+            <!-- Sello de lacre central -->
+            <div class="sello-lacre" aria-hidden="true">
+                <svg class="w-6 h-6 text-amber-200/90 drop-shadow" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Botón opcional para volver a cerrar el sobre -->
+    <footer class="pb-4 z-20 min-h-[52px] flex items-center justify-center">
+        <button
+            id="btnCerrar"
+            type="button"
+            class="opacity-0 pointer-events-none translate-y-3 flex items-center gap-2 px-5 py-2.5 bg-amber-900 hover:bg-amber-800 active:scale-95 text-amber-50 text-sm font-medium rounded-full shadow-md transition-all duration-300 cursor-pointer"
+        >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            Cerrar sobre
+        </button>
+    </footer>
+
+    <script>
+        // Control de apertura y cierre del sobre mediante clic, toque o teclado
+        document.addEventListener('DOMContentLoaded', () => {
+            const sobre = document.getElementById('sobre');
+            const carta = document.getElementById('carta');
+            const btnCerrar = document.getElementById('btnCerrar');
+            const instruccion = document.getElementById('instruccion');
+
+            let estaAbierto = false;
+
+            // Actualiza el estado visual del sobre, la instrucción y el botón de cerrar
+            function actualizarEstado(abrir) {
+                estaAbierto = abrir;
+                sobre.classList.toggle('abierto', estaAbierto);
+
+                if (estaAbierto) {
+                    instruccion.textContent = 'Haz clic en el sobre o usa el botón para cerrarlo';
+                    btnCerrar.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-3');
+                } else {
+                    instruccion.textContent = 'Haz clic o toca el sobre para abrirlo';
+                    btnCerrar.classList.add('opacity-0', 'pointer-events-none', 'translate-y-3');
+                }
+            }
+
+            // Alternar abrir/cerrar al hacer clic o tocar el sobre
+            sobre.addEventListener('click', () => {
+                actualizarEstado(!estaAbierto);
+            });
+
+            // Permitir abrir/cerrar con Enter o Espacio cuando el sobre tiene foco
+            sobre.addEventListener('keydown', (evento) => {
+                if (evento.key === 'Enter' || evento.key === ' ') {
+                    evento.preventDefault();
+                    actualizarEstado(!estaAbierto);
+                }
+            });
+
+            // Evitar que hacer clic dentro del texto de la carta cierre el sobre accidentalmente
+            carta.addEventListener('click', (evento) => {
+                if (estaAbierto) {
+                    evento.stopPropagation();
+                }
+            });
+
+            // Botón explícito para volver a cerrar el sobre
+            btnCerrar.addEventListener('click', (evento) => {
+                evento.stopPropagation();
+                actualizarEstado(false);
+            });
+        });
+    </script>
+</body>
+</html>
+```
